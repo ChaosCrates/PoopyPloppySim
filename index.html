@@ -29,7 +29,7 @@
             border-bottom: 10px solid #1a252f;
             position: relative;
         }
-        #main-room { background: #34495e; padding-top: 100px; }
+        #main-room { background: #34495e; padding-top: 130px; }
         #shop-room { background: #2ecc71; color: #fff; }
         #friend-room { background: #795548; color: #fff; }
 
@@ -40,7 +40,6 @@
             box-shadow: 0 0 30px rgba(0,0,0,0.7);
         }
 
-        /* Extreme Mode Styling */
         .extreme-active { background: #c0392b !important; animation: shake 0.5s infinite; }
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
@@ -69,7 +68,7 @@
             font-weight: bold;
         }
         button:hover { transform: scale(1.05); }
-        button:disabled { background: #95a5a6; opacity: 0.5; }
+        #music-btn { background: #9b59b6; font-size: 14px; margin-left: 10px; }
 
         .friend-display { font-size: 100px; position: relative; height: 280px; width: 100%; overflow: hidden; }
         .plop-animation { position: absolute; left: 50%; animation: dropPoop 1s infinite; display: none; }
@@ -77,20 +76,23 @@
             0% { top: 80px; opacity: 1; transform: translateX(-50%) scale(0.5); }
             100% { top: 220px; opacity: 0; transform: translateX(-50%) scale(1.2); }
         }
-        
-        #extreme-toggle { background: #e74c3c; font-size: 20px; margin-top: 10px; }
-        .warning { color: #ff6347; font-size: 14px; margin-top: 5px; }
     </style>
 </head>
 <body>
 
- <div id="ui-bar">
-        <div style="font-size: 24px;">
-            <p>PoopyPloppy - by Kacen and Roman - Plop with your friends!</p>
+    <div id="ui-bar">
+        <div style="font-size: 20px;">
+            PoopyPloppy - by Kacen and Roman
+            <br>
             🪙 <span id="coins">0</span> | LVL: <span id="lvl">1</span> | STREAK: <span id="streak">0</span>
         </div>
-        <button id="extreme-toggle" onclick="toggleExtreme()">ENABLE EXTREME MODE (2x COINS)</button>
+        <button id="extreme-toggle" onclick="toggleExtreme()">ENABLE EXTREME</button>
+        <button id="music-btn" onclick="toggleMusic()">🎵 Music: OFF</button>
     </div>
+
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="main-room" class="room">
         <h1 id="mode-text">NORMAL MODE</h1>
@@ -102,7 +104,7 @@
         <h1>THE SHOP</h1>
         <div class="shop-card">
             <h3>BIGGER DROPS</h3>
-            <button id="buySize" onclick="buyUpgrade()">Bigger 💩 (<span id="sizeCost">10</span> 🪙)</button>
+            <button onclick="buyUpgrade()">Bigger 💩 (<span id="sizeCost">10</span> 🪙)</button>
         </div>
         <div class="shop-card">
             <h3>HIRE HELP</h3>
@@ -110,7 +112,7 @@
         </div>
         <div class="shop-card" id="speed-card" style="display:none;">
             <h3>FAST DIGESTION</h3>
-            <button id="buySpeed" onclick="upgradeFriendSpeed()">Faster Pal (<span id="speedCost">100</span> 🪙)</button>
+            <button onclick="upgradeFriendSpeed()">Faster Pal (<span id="speedCost">100</span> 🪙)</button>
         </div>
     </div>
 
@@ -127,39 +129,68 @@
     </div>
 
 <script>
+// --- AUDIO & MUSIC ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const bgMusic = document.getElementById('bgMusic');
+let isMusicPlaying = false;
+
+function toggleMusic() {
+    if (isMusicPlaying) {
+        bgMusic.pause();
+        document.getElementById('music-btn').innerText = "🎵 Music: OFF";
+    } else {
+        bgMusic.play();
+        document.getElementById('music-btn').innerText = "🎵 Music: ON";
+    }
+    isMusicPlaying = !isMusicPlaying;
+}
+
+function playSFX(type) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+
+    if (type === 'drop') {
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    } else if (type === 'win') {
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    } else if (type === 'fail') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+}
+
+// --- GAME LOGIC ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-
-let coins = 0, level = 1, streak = 0;
-let gameState = "aiming";
+let coins = 0, level = 1, streak = 0, gameState = "aiming";
 let babyX = 50, babyDir = 1, babySpeed = 2.5;
 let plopY = 80, plopX = 0, fallSpeed = 0, gravity = 0.4;
 let poopSize = 30, upgradeCost = 10;
-
-// Extreme Mode Variables
-let extremeMode = false;
-let toiletX = 210, toiletDir = 1, toiletSpeed = 2;
-
-// Friend Logic
-let hasFriend = false, friendInterval = null, friendCooldown = 3000;
-let friendCost = 50, friendSpeedCost = 100;
+let extremeMode = false, toiletX = 210, toiletDir = 1, toiletSpeed = 2;
+let hasFriend = false, friendInterval = null, friendCooldown = 3000, friendCost = 50, friendSpeedCost = 100;
 
 function toggleExtreme() {
     extremeMode = !extremeMode;
     const btn = document.getElementById('extreme-toggle');
     const room = document.getElementById('main-room');
-    const txt = document.getElementById('mode-text');
-    
     if(extremeMode) {
-        btn.innerText = "Disable extreme mode";
-        btn.style.background = "#2ecc71";
+        btn.innerText = "DISABLE EXTREME";
         room.classList.add('extreme-active');
-        txt.innerText = "🔥 EXTREME MODE 🔥";
+        document.getElementById('mode-text').innerText = "🔥 EXTREME MODE 🔥";
     } else {
-        btn.innerText = "Enable extreme mode";
-        btn.style.background = "#e74c3c";
+        btn.innerText = "ENABLE EXTREME";
         room.classList.remove('extreme-active');
-        txt.innerText = "NORMAL MODE";
+        document.getElementById('mode-text').innerText = "NORMAL MODE";
     }
 }
 
@@ -172,32 +203,27 @@ function updateUI() {
 
 function buyUpgrade() {
     if (coins >= upgradeCost) {
-        coins -= upgradeCost;
-        poopSize += 12;
+        coins -= upgradeCost; poopSize += 12;
         upgradeCost = Math.floor(upgradeCost * 2.2);
-        updateUI();
+        playSFX('win'); updateUI();
     }
 }
 
 function buyFriend() {
     if (coins >= friendCost) {
-        coins -= friendCost;
-        hasFriend = true;
+        coins -= friendCost; hasFriend = true;
         document.getElementById('buyFriend').disabled = true;
         document.getElementById('speed-card').style.display = "inline-block";
         document.getElementById('friend-area').style.opacity = "1";
-        document.getElementById('friend-status').innerText = "PAL IS POOPING";
         document.getElementById('friend-emoji').innerText = "👦";
         document.getElementById('friend-poop').style.display = "block";
-        startFriendTimer();
-        updateUI();
+        playSFX('win'); startFriendTimer(); updateUI();
     }
 }
 
 function startFriendTimer() {
     if (friendInterval) clearInterval(friendInterval);
-    const income = (1000 / friendCooldown).toFixed(1);
-    document.getElementById('friend-income').innerText = `+${income} COINS / SEC`;
+    document.getElementById('friend-income').innerText = `+${(1000 / friendCooldown).toFixed(1)} COINS / SEC`;
     document.getElementById('friend-poop').style.animationDuration = (friendCooldown/1000) + "s";
     friendInterval = setInterval(() => { coins += 1; updateUI(); }, friendCooldown);
 }
@@ -208,50 +234,32 @@ function upgradeFriendSpeed() {
         friendCooldown = Math.max(150, friendCooldown - 350);
         friendSpeedCost = Math.floor(friendSpeedCost * 2.5);
         document.getElementById('speedCost').innerText = friendSpeedCost;
-        startFriendTimer();
-        updateUI();
+        playSFX('win'); startFriendTimer(); updateUI();
     }
 }
 
 function resetRound() {
-    gameState = "aiming";
-    plopY = 80; fallSpeed = 0;
-    babySpeed = 2 + (level * 0.25);
-    toiletSpeed = 1 + (level * 0.4);
+    gameState = "aiming"; plopY = 80; fallSpeed = 0;
+    babySpeed = 2 + (level * 0.25); toiletSpeed = 1 + (level * 0.4);
 }
 
 function update() {
-    // Move Baby
     if (gameState === "aiming") {
         babyX += babyDir * babySpeed;
         if (babyX > canvas.width - 50 || babyX < 50) babyDir *= -1;
     }
-
-    // Move Toilet (Extreme Mode)
     if (extremeMode) {
         toiletX += toiletDir * toiletSpeed;
         if (toiletX > canvas.width - 100 || toiletX < 20) toiletDir *= -1;
     }
-
-    // Physics
     if (gameState === "falling") {
-        fallSpeed += gravity;
-        plopY += fallSpeed;
-
-        if (plopY > canvas.height - 20) { 
-            streak = 0; 
-            resetRound(); 
-            updateUI();
-        }
-
-        // Hit Detection
+        fallSpeed += gravity; plopY += fallSpeed;
+        if (plopY > canvas.height - 20) { playSFX('fail'); streak = 0; resetRound(); updateUI(); }
         if (plopY >= 380 && plopX + (poopSize/2) > toiletX && plopX - (poopSize/2) < toiletX + 80) {
+            playSFX('win');
             let bonus = extremeMode ? 2 : 1;
-            coins += (1 + streak) * bonus;
-            level += bonus;
-            streak++;
-            resetRound();
-            updateUI();
+            coins += (1 + streak) * bonus; level += bonus; streak++;
+            resetRound(); updateUI();
         }
     }
     draw();
@@ -260,16 +268,9 @@ function update() {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Floor
-    ctx.fillStyle = "#795548";
-    ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
-    // Toilet
-    ctx.font = "80px Arial";
-    ctx.fillText("🚽", toiletX, 420);
-    // Baby
-    ctx.font = "50px Arial";
-    ctx.fillText("👶", babyX - 25, 70);
-    // Poop
+    ctx.fillStyle = "#795548"; ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+    ctx.font = "80px Arial"; ctx.fillText("🚽", toiletX, 420);
+    ctx.font = "50px Arial"; ctx.fillText("👶", babyX - 25, 70);
     if (gameState === "falling") {
         ctx.font = `${poopSize}px Arial`;
         ctx.fillText("💩", plopX - (poopSize/2), plopY);
@@ -278,6 +279,8 @@ function draw() {
 
 canvas.addEventListener('mousedown', () => {
     if (gameState === "aiming") {
+        if (!isMusicPlaying) toggleMusic(); // Start music on first play
+        playSFX('drop');
         gameState = "falling";
         plopX = babyX;
     }
