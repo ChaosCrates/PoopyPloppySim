@@ -1,246 +1,202 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PoopyPloppy - Kacen & Roman</title>
+    <title>PoopyPloppy - ULTIMATE EDITION</title>
     <style>
         body { 
-            background: #2c3e50; 
-            color: #f1c40f; 
-            text-align: center; 
-            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive; 
-            margin: 0;
-            padding: 0;
-            transition: background 0.5s;
+            background: #2c3e50; color: #f1c40f; text-align: center; 
+            font-family: 'Comic Sans MS', cursive; 
+            margin: 0; padding: 0; transition: background 0.5s; overflow-x: hidden;
         }
         #ui-bar { 
-            position: fixed; 
-            top: 0; width: 100%;
-            background: rgba(0, 0, 0, 0.9); 
-            padding: 10px 0; 
-            border-bottom: 3px solid #f1c40f;
-            z-index: 1000;
+            position: fixed; top: 0; width: 100%; background: rgba(0, 0, 0, 0.9); 
+            padding: 10px 0; border-bottom: 3px solid #f1c40f; z-index: 1000;
         }
-        .room {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-bottom: 10px solid #1a252f;
-            position: relative;
-        }
-        #main-room { background: #34495e; padding-top: 130px; }
-        #shop-room { background: #2ecc71; color: #fff; }
-        #friend-room { background: #795548; color: #fff; }
+        .room { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 10px solid #1a252f; position: relative; }
+        #main-room { background: #34495e; padding-top: 150px; }
+        #shop-room { background: #2ecc71; color: white; }
+        #friend-room { background: #795548; color: white; }
+        
+        canvas { background: #ecf0f1; border: 10px solid #7f8c8d; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.7); cursor: crosshair; }
+        
+        /* Event Effects */
+        .disco { animation: discoBG 0.2s infinite !important; }
+        @keyframes discoBG { 0% { background: #ff0000; } 33% { background: #00ff00; } 66% { background: #0000ff; } }
+        
+        .leaderboard { position: absolute; left: 20px; top: 160px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; text-align: left; border: 1px solid gold; font-size: 14px; }
+        .boss-ui { display: none; color: #e74c3c; font-size: 30px; font-weight: bold; margin-bottom: 10px; text-shadow: 2px 2px #000; }
+        
+        .shop-card { background: rgba(0,0,0,0.3); border: 3px solid white; padding: 20px; margin: 10px; width: 220px; border-radius: 15px; display: inline-block; vertical-align: top; }
+        
+        /* Friend Animation */
+        .friend-display { font-size: 80px; position: relative; height: 250px; width: 200px; }
+        .plop-animation { position: absolute; left: 40%; animation: dropPoop 1s infinite; display: none; }
+        @keyframes dropPoop { 0% { top: 50px; opacity: 1; } 100% { top: 180px; opacity: 0; } }
 
-        canvas { 
-            background: #ecf0f1; 
-            border: 10px solid #7f8c8d; 
-            border-radius: 20px; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.7);
-        }
+        /* Dev Section */
+        #dev-section { background: #000; color: #0f0; padding: 40px; font-family: monospace; }
+        .dev-controls { display: none; }
+        .dev-btn { background: #0f0; color: #000; border: none; padding: 10px; margin: 5px; cursor: pointer; font-weight: bold; }
 
-        .extreme-active { background: #c0392b !important; animation: shake 0.5s infinite; }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            50% { transform: translate(-1px, -2px) rotate(-1deg); }
-            100% { transform: translate(1px, 1px) rotate(0deg); }
-        }
-
-        .shop-card {
-            background: rgba(0,0,0,0.3);
-            border: 3px solid white;
-            padding: 20px;
-            margin: 10px;
-            width: 250px;
-            border-radius: 15px;
-            display: inline-block;
-        }
-        button { 
-            font-family: 'Comic Sans MS', cursive; 
-            padding: 12px 24px; 
-            font-size: 16px; 
-            cursor: pointer; 
-            background: #e67e22; 
-            color: white; 
-            border: 2px solid white; 
-            border-radius: 10px;
-            font-weight: bold;
-        }
-        button:hover { transform: scale(1.05); }
-        #music-btn { background: #9b59b6; font-size: 14px; margin-left: 10px; }
-
-        .friend-display { font-size: 100px; position: relative; height: 280px; width: 100%; overflow: hidden; }
-        .plop-animation { position: absolute; left: 50%; animation: dropPoop 1s infinite; display: none; }
-        @keyframes dropPoop {
-            0% { top: 80px; opacity: 1; transform: translateX(-50%) scale(0.5); }
-            100% { top: 220px; opacity: 0; transform: translateX(-50%) scale(1.2); }
-        }
+        button { font-family: 'Comic Sans MS', cursive; padding: 10px 20px; cursor: pointer; background: #e67e22; color: white; border: 2px solid white; border-radius: 10px; font-weight: bold; }
+        button:hover { transform: scale(1.1); }
+        .golden { color: #f1c40f; text-shadow: 0 0 10px gold; animation: glow 0.5s infinite alternate; }
+        @keyframes glow { from { text-shadow: 0 0 5px gold; } to { text-shadow: 0 0 20px yellow; } }
     </style>
 </head>
-<body>
+<body id="gameBody">
 
     <div id="ui-bar">
-        <div style="font-size: 20px;">
-            PoopyPloppy - by Kacen and Roman
+        <div style="font-size: 18px;">
+            💩 Kacen & Roman's Plop Empire | High Score: <span id="bestScore">0</span>
             <br>
             🪙 <span id="coins">0</span> | LVL: <span id="lvl">1</span> | STREAK: <span id="streak">0</span>
         </div>
-        <button id="extreme-toggle" onclick="toggleExtreme()">ENABLE EXTREME</button>
-        <button id="music-btn" onclick="toggleMusic()">🎵 Music: OFF</button>
+        <button id="extreme-toggle" onclick="toggleExtreme()">ENABLE EXTREME MODE</button>
+        <div id="event-timer" style="color: #2ecc71; font-size: 12px; margin-top: 5px;">Boss: 60m | Abuse: 10m</div>
     </div>
 
-    <audio id="bgMusic" loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-    </audio>
+    <div class="leaderboard">
+        <h4 style="margin:0; color:gold;">🏆 RANKINGS</h4>
+        <div id="leaderList"></div>
+    </div>
 
     <div id="main-room" class="room">
+        <div id="boss-info" class="boss-ui">🐲 MOM DRAGON HP: <span id="bossHP">5</span> 🐲</div>
         <h1 id="mode-text">NORMAL MODE</h1>
         <canvas id="gameCanvas" width="500" height="450"></canvas>
-        <div style="font-size: 30px;">↓ SHOP & BASEMENT ↓</div>
+        <p>↓ Scroll for Shop, Basement & Dev Console ↓</p>
     </div>
 
     <div id="shop-room" class="room">
-        <h1>THE SHOP</h1>
-        <div class="shop-card">
-            <h3>BIGGER DROPS</h3>
-            <button onclick="buyUpgrade()">Bigger 💩 (<span id="sizeCost">10</span> 🪙)</button>
-        </div>
-        <div class="shop-card">
-            <h3>HIRE HELP</h3>
-            <button id="buyFriend" onclick="buyFriend()">Hire Pal (50 🪙)</button>
-        </div>
-        <div class="shop-card" id="speed-card" style="display:none;">
-            <h3>FAST DIGESTION</h3>
-            <button onclick="upgradeFriendSpeed()">Faster Pal (<span id="speedCost">100</span> 🪙)</button>
-        </div>
+        <h1>🛒 THE PLOP SHOP</h1>
+        <div class="shop-card"><h3>BIGGER DROPS</h3><button onclick="buyUpgrade()">Upgrade (<span id="sizeCost">10</span> 🪙)</button></div>
+        <div class="shop-card"><h3>HIRE PAL</h3><button id="buyFriend" onclick="buyFriend()">Hire (50 🪙)</button></div>
+        <div class="shop-card" id="speed-card" style="display:none;"><h3>PAL SPEED</h3><button onclick="upgradeFriendSpeed()">Upgrade (<span id="speedCost">100</span> 🪙)</button></div>
     </div>
 
     <div id="friend-room" class="room">
-        <h1>THE BASEMENT BATHROOM</h1>
+        <h1>🏚️ THE BASEMENT</h1>
         <div id="friend-area" style="opacity: 0.3;">
-            <p id="friend-status">VACANT</p>
+            <p id="friend-status">NO ONE IS HERE...</p>
             <div class="friend-display">
-                <span id="friend-emoji" style="position: absolute; left: 50%; transform: translateX(-50%);">👤</span>
+                <span id="friend-emoji">👤</span><br>
                 <span id="friend-poop" class="plop-animation">💩</span>
+                <span>🚽</span>
             </div>
             <h2 id="friend-income">+0 COINS / SEC</h2>
         </div>
     </div>
 
+    <div id="dev-section">
+        <h2>🛠️ DEV ONLY ACCESS</h2>
+        <div id="dev-lock">
+            <input type="password" id="devPass" placeholder="Admin PW">
+            <button onclick="unlockDev()">Login</button>
+        </div>
+        <div id="dev-controls" class="dev-controls">
+            <button class="dev-btn" onclick="addCoins(5000)">+5,000 Coins</button>
+            <button class="dev-btn" onclick="startBoss()">Spawn Boss</button>
+            <button class="dev-btn" onclick="startAdminAbuse()">Abuse Event</button>
+        </div>
+    </div>
+
+    <audio id="bgMusic" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
+
 <script>
-// --- AUDIO & MUSIC ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-const bgMusic = document.getElementById('bgMusic');
-let isMusicPlaying = false;
-
-function toggleMusic() {
-    if (isMusicPlaying) {
-        bgMusic.pause();
-        document.getElementById('music-btn').innerText = "🎵 Music: OFF";
-    } else {
-        bgMusic.play();
-        document.getElementById('music-btn').innerText = "🎵 Music: ON";
-    }
-    isMusicPlaying = !isMusicPlaying;
-}
-
-function playSFX(type) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-
-    if (type === 'drop') {
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-    } else if (type === 'win') {
-        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-    } else if (type === 'fail') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
-    }
-}
-
-// --- GAME LOGIC ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const body = document.getElementById('gameBody');
+
+// Core Stats
 let coins = 0, level = 1, streak = 0, gameState = "aiming";
-let babyX = 50, babyDir = 1, babySpeed = 2.5;
+let babyX = 50, babyDir = 1, babySpeed = 3;
 let plopY = 80, plopX = 0, fallSpeed = 0, gravity = 0.4;
 let poopSize = 30, upgradeCost = 10;
-let extremeMode = false, toiletX = 210, toiletDir = 1, toiletSpeed = 2;
-let hasFriend = false, friendInterval = null, friendCooldown = 3000, friendCost = 50, friendSpeedCost = 100;
+let toiletX = 210, toiletDir = 1, toiletSpeed = 2;
+let isGolden = false;
 
+// Mode & Event Stats
+let extremeMode = false;
+let isBossFight = false, bossHP = 5;
+let adminEventActive = false;
+let highscore = localStorage.getItem('poopyHighScore') || 0;
+
+// Friend Stats
+let hasFriend = false, friendInterval = null, friendCooldown = 3000, friendSpeedCost = 100;
+
+// Init
+document.getElementById('bestScore').innerText = highscore;
+updateLeaderboard();
+
+function updateLeaderboard() {
+    let list = `1. Kacen - ${highscore}<br>2. Roman - ${Math.floor(highscore * 0.7)}<br>3. Guest - 0`;
+    document.getElementById('leaderList').innerHTML = list;
+}
+
+// --- LOGIC ---
 function toggleExtreme() {
     extremeMode = !extremeMode;
-    const btn = document.getElementById('extreme-toggle');
-    const room = document.getElementById('main-room');
-    if(extremeMode) {
-        btn.innerText = "DISABLE EXTREME";
-        room.classList.add('extreme-active');
-        document.getElementById('mode-text').innerText = "🔥 EXTREME MODE 🔥";
-    } else {
-        btn.innerText = "ENABLE EXTREME";
-        room.classList.remove('extreme-active');
-        document.getElementById('mode-text').innerText = "NORMAL MODE";
-    }
+    let btn = document.getElementById('extreme-toggle');
+    btn.innerText = extremeMode ? "EXTREME: ON" : "ENABLE EXTREME MODE";
+    document.getElementById('mode-text').innerText = extremeMode ? "🔥 EXTREME MODE 🔥" : "NORMAL MODE";
+    document.getElementById('main-room').style.background = extremeMode ? "#c0392b" : "#34495e";
 }
 
-function updateUI() {
-    document.getElementById('coins').innerText = Math.floor(coins);
-    document.getElementById('lvl').innerText = level;
-    document.getElementById('streak').innerText = streak;
-    document.getElementById('sizeCost').innerText = upgradeCost;
+function checkClock() {
+    let now = new Date();
+    let mins = now.getMinutes(); let secs = now.getSeconds();
+    document.getElementById('event-timer').innerText = `Boss: ${60-mins}m | Abuse: ${10-(mins%10)}m`;
+    if (mins === 0 && secs === 0 && !isBossFight) startBoss();
+    if (mins % 10 === 0 && secs === 0 && !adminEventActive) startAdminAbuse();
+}
+setInterval(checkClock, 1000);
+
+function startBoss() {
+    isBossFight = true; bossHP = extremeMode ? 10 : 5;
+    document.getElementById('boss-info').style.display = "block";
+    document.getElementById('bossHP').innerText = bossHP;
+    body.style.background = "#000";
 }
 
-function buyUpgrade() {
-    if (coins >= upgradeCost) {
-        coins -= upgradeCost; poopSize += 12;
-        upgradeCost = Math.floor(upgradeCost * 2.2);
-        playSFX('win'); updateUI();
-    }
+function startAdminAbuse() {
+    adminEventActive = true; body.classList.add('disco');
+    setTimeout(() => { body.classList.remove('disco'); adminEventActive = false; }, 10000);
 }
 
 function buyFriend() {
-    if (coins >= friendCost) {
-        coins -= friendCost; hasFriend = true;
+    if(coins >= 50) {
+        coins -= 50; hasFriend = true;
         document.getElementById('buyFriend').disabled = true;
         document.getElementById('speed-card').style.display = "inline-block";
         document.getElementById('friend-area').style.opacity = "1";
         document.getElementById('friend-emoji').innerText = "👦";
         document.getElementById('friend-poop').style.display = "block";
-        playSFX('win'); startFriendTimer(); updateUI();
+        startFriendTimer(); updateUI();
     }
 }
 
 function startFriendTimer() {
-    if (friendInterval) clearInterval(friendInterval);
-    document.getElementById('friend-income').innerText = `+${(1000 / friendCooldown).toFixed(1)} COINS / SEC`;
+    if(friendInterval) clearInterval(friendInterval);
+    document.getElementById('friend-income').innerText = `+${(1000/friendCooldown).toFixed(1)}/sec`;
     document.getElementById('friend-poop').style.animationDuration = (friendCooldown/1000) + "s";
-    friendInterval = setInterval(() => { coins += 1; updateUI(); }, friendCooldown);
+    friendInterval = setInterval(() => { coins++; updateUI(); }, friendCooldown);
 }
 
 function upgradeFriendSpeed() {
-    if (coins >= friendSpeedCost) {
-        coins -= friendSpeedCost;
-        friendCooldown = Math.max(150, friendCooldown - 350);
-        friendSpeedCost = Math.floor(friendSpeedCost * 2.5);
-        document.getElementById('speedCost').innerText = friendSpeedCost;
-        playSFX('win'); startFriendTimer(); updateUI();
+    if(coins >= friendSpeedCost) {
+        coins -= friendSpeedCost; friendCooldown = Math.max(200, friendCooldown - 400);
+        friendSpeedCost *= 2; document.getElementById('speedCost').innerText = friendSpeedCost;
+        startFriendTimer(); updateUI();
     }
 }
 
+// --- GAME LOOP ---
 function resetRound() {
     gameState = "aiming"; plopY = 80; fallSpeed = 0;
-    babySpeed = 2 + (level * 0.25); toiletSpeed = 1 + (level * 0.4);
+    babySpeed = 3 + (level * 0.1);
+    toiletSpeed = 2 + (level * 0.2);
+    isGolden = (Math.random() < 0.05); // 5% chance for Golden Poop
 }
 
 function update() {
@@ -248,45 +204,76 @@ function update() {
         babyX += babyDir * babySpeed;
         if (babyX > canvas.width - 50 || babyX < 50) babyDir *= -1;
     }
-    if (extremeMode) {
+    if (extremeMode && !isBossFight) {
         toiletX += toiletDir * toiletSpeed;
-        if (toiletX > canvas.width - 100 || toiletX < 20) toiletDir *= -1;
+        if (toiletX > canvas.width - 90 || toiletX < 10) toiletDir *= -1;
     }
     if (gameState === "falling") {
         fallSpeed += gravity; plopY += fallSpeed;
-        if (plopY > canvas.height - 20) { playSFX('fail'); streak = 0; resetRound(); updateUI(); }
-        if (plopY >= 380 && plopX + (poopSize/2) > toiletX && plopX - (poopSize/2) < toiletX + 80) {
-            playSFX('win');
-            let bonus = extremeMode ? 2 : 1;
-            coins += (1 + streak) * bonus; level += bonus; streak++;
-            resetRound(); updateUI();
+        if (plopY > canvas.height - 20) { streak = 0; resetRound(); }
+        
+        if (isBossFight) {
+            if (plopY < 180 && Math.abs(plopX - babyX) < 60) {
+                bossHP--; document.getElementById('bossHP').innerText = bossHP;
+                resetRound(); if(bossHP <= 0) winBoss();
+            }
+        } else {
+            if (plopY >= 380 && plopX > toiletX && plopX < toiletX + 80) {
+                let mult = (isGolden ? 5 : 1) * (extremeMode ? 2 : 1);
+                coins += (1 + streak) * mult;
+                level++; streak++;
+                if(level > highscore) { highscore = level; localStorage.setItem('poopyHighScore', highscore); }
+                resetRound(); updateUI(); updateLeaderboard();
+            }
         }
     }
     draw();
     requestAnimationFrame(update);
 }
 
+function winBoss() {
+    isBossFight = false; coins += 1000;
+    document.getElementById('boss-info').style.display = "none";
+    body.style.background = extremeMode ? "#c0392b" : "#34495e";
+    updateUI();
+}
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#795548"; ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
-    ctx.font = "80px Arial"; ctx.fillText("🚽", toiletX, 420);
+    if(isBossFight) {
+        ctx.font = "120px Arial"; ctx.fillText("🐲", babyX - 60, 160);
+        if(extremeMode) ctx.fillText("🐲", (canvas.width - babyX) - 60, 160);
+    } else {
+        ctx.font = "80px Arial"; ctx.fillText("🚽", toiletX, 420);
+    }
     ctx.font = "50px Arial"; ctx.fillText("👶", babyX - 25, 70);
     if (gameState === "falling") {
         ctx.font = `${poopSize}px Arial`;
-        ctx.fillText("💩", plopX - (poopSize/2), plopY);
+        ctx.fillText(isGolden ? "✨" : "💩", plopX - 15, plopY);
     }
 }
 
 canvas.addEventListener('mousedown', () => {
     if (gameState === "aiming") {
-        if (!isMusicPlaying) toggleMusic(); // Start music on first play
-        playSFX('drop');
-        gameState = "falling";
-        plopX = babyX;
+        gameState = "falling"; plopX = babyX;
+        document.getElementById('bgMusic').play().catch(()=>{});
     }
 });
 
-update();
+// --- UI & DEV ---
+function updateUI() {
+    document.getElementById('coins').innerText = coins;
+    document.getElementById('lvl').innerText = level;
+    document.getElementById('streak').innerText = streak;
+    document.getElementById('sizeCost').innerText = upgradeCost;
+    document.getElementById('bestScore').innerText = highscore;
+}
+function buyUpgrade() { if(coins >= upgradeCost) { coins -= upgradeCost; poopSize += 8; upgradeCost *= 2; updateUI(); } }
+function unlockDev() { if(document.getElementById('devPass').value === "admin123") { document.getElementById('dev-lock').style.display = "none"; document.getElementById('dev-controls').style.display = "block"; } }
+function addCoins(n) { coins += n; updateUI(); }
+
+updateUI(); update();
 </script>
 </body>
 </html>
